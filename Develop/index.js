@@ -1,3 +1,4 @@
+//Global Variables
 const inquirer = require("inquirer");
 const mysql = require("mysql2");
 
@@ -14,6 +15,7 @@ const db = mysql.createConnection(
   console.log(`Connected to the movies_db database.`)
 );
 
+// Funcstion to view all Employees
 function viewAllEmployees() {
   db.connect(function (err) {
     if (err) throw err;
@@ -30,17 +32,7 @@ function viewAllEmployees() {
   });
 }
 
-function viewRoles() {
-  db.connect(function (err) {
-    if (err) throw err;
-    db.query("SELECT * FROM roles", function (err, result) {
-      if (err) throw err;
-      console.table(result);
-      generateEmployeeManager();
-    });
-  });
-}
-
+// function to view all Departments
 function viewAllDepartments() {
   db.connect(function (err) {
     if (err) throw err;
@@ -52,6 +44,7 @@ function viewAllDepartments() {
   });
 }
 
+// funcstion to be able to create a department
 function addDepartments() {
   inquirer
     .prompt([
@@ -77,6 +70,19 @@ function addDepartments() {
     });
 }
 
+// function to view all roles
+function viewRoles() {
+  db.connect(function (err) {
+    if (err) throw err;
+    db.query("SELECT * FROM roles", function (err, result) {
+      if (err) throw err;
+      console.table(result);
+      generateEmployeeManager();
+    });
+  });
+}
+
+// function to add a role
 function addRole() {
   db.connect(function (err) {
     if (err) throw err;
