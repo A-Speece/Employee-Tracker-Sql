@@ -32,6 +32,78 @@ function viewAllEmployees() {
   });
 }
 
+// function to add an Employee
+function addEmployee() {
+  db.connect(function (err) {
+    if (err) throw err;
+    db.query("SELECT * FROM roles", function (err, result) {
+      if (err) throw err;
+
+      inquirer
+        .prompt([
+          {
+            type: "input",
+            name: "first_name",
+            message: "What is the employee's first name?",
+          },
+          {
+            type: "input",
+            name: "last_name",
+            message: "What is the employee last name?",
+          },
+          {
+            type: "list",
+            name: "role_id",
+            message: "What is the employee's role?",
+            choices: result.map((item) => {
+              return {
+                name: item.title,
+                value: item.id,
+              };
+            }),
+          },
+
+          {
+            type: "list",
+            name: "manager_id",
+            message: "Who is the employee manager?",
+            choices: result.map((item) => {
+              return {
+                name: item.manager_id,
+                value: item.id,
+              };
+            }),
+          },
+        ])
+        .then((answers) => {
+          db.connect(function (err) {
+            if (err) throw err;
+            db.query(
+              "INSERT INTO employee(first_name,last_name, role_id, manager_id) VALUES (?,?,?,?)",
+              [
+                answers.first_name,
+                answers.last_name,
+                answers.role_id,
+                answers.manager_id,
+              ],
+              function (err, result) {
+                if (err) throw err;
+                console.log(
+                  "Added " +
+                    answers.first_name +
+                    " " +
+                    answers.last_name +
+                    " to the database"
+                );
+                generateEmployeeManager();
+              }
+            );
+          });
+        });
+    });
+  });
+}
+
 // function to view all Departments
 function viewAllDepartments() {
   db.connect(function (err) {
@@ -44,7 +116,7 @@ function viewAllDepartments() {
   });
 }
 
-// funcstion to be able to create a department
+// function to be able to create a department
 function addDepartments() {
   inquirer
     .prompt([
@@ -88,18 +160,18 @@ function addRole() {
     if (err) throw err;
     db.query("SELECT * FROM department", function (err, result) {
       if (err) throw err;
-      console.log(result);
+
       inquirer
         .prompt([
           {
             type: "input",
             name: "title",
-            message: "Title",
+            message: "What is the title of the role?",
           },
           {
             type: "input",
             name: "salary",
-            message: "Salary",
+            message: "What is the salary of the role?",
           },
           {
             type: "list",
