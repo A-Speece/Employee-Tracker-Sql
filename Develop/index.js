@@ -15,14 +15,14 @@ const db = mysql.createConnection(
   console.log(`Connected to the movies_db database.`)
 );
 
-// Funcstion to view all Employees
+// Function to view all Employees
 function viewAllEmployees() {
   db.connect(function (err) {
     if (err) throw err;
     db.query(
       `SELECT employee.id,employee.first_name,employee.last_name,
-        roles.title,roles.salary,department.department_name FROM employee JOIN roles ON employee.role_id = roles.id 
-        JOIN department ON department.id = roles.department_id`,
+        roles.title,roles.salary,department.department_name,CONCAT(manager.first_name,' ', manager.last_name) AS manager_name FROM employee JOIN roles ON employee.role_id = roles.id 
+        JOIN department ON department.id = roles.department_id LEFT JOIN employee AS manager ON employee.manager_id = manager.id`,
       function (err, result) {
         if (err) throw err;
         console.table(result);
@@ -36,70 +36,131 @@ function viewAllEmployees() {
 function addEmployee() {
   db.connect(function (err) {
     if (err) throw err;
-    db.query("SELECT * FROM roles", function (err, result) {
+    db.query("SELECT * FROM roles", function (err, result1) {
       if (err) throw err;
+      db.query("SELECT * FROM employee", function (err, result2) {
+        if (err) throw err;
+        inquirer
+          .prompt([
+            {
+              type: "input",
+              name: "first_name",
+              message: "What is the employee's first name?",
+            },
+            {
+              type: "input",
+              name: "last_name",
+              message: "What is the employee last name?",
+            },
+            {
+              type: "list",
+              name: "role_id",
+              message: "What is the employee's role?",
+              choices: result1.map((item) => {
+                return {
+                  name: item.title,
+                  value: item.id,
+                };
+              }),
+            },
 
-      inquirer
-        .prompt([
-          {
-            type: "input",
-            name: "first_name",
-            message: "What is the employee's first name?",
-          },
-          {
-            type: "input",
-            name: "last_name",
-            message: "What is the employee last name?",
-          },
-          {
-            type: "list",
-            name: "role_id",
-            message: "What is the employee's role?",
-            choices: result.map((item) => {
-              return {
-                name: item.title,
-                value: item.id,
-              };
-            }),
-          },
-
-          {
-            type: "list",
-            name: "manager_id",
-            message: "Who is the employee manager?",
-            choices: result.map((item) => {
-              return {
-                name: item.manager_id,
-                value: item.id,
-              };
-            }),
-          },
-        ])
-        .then((answers) => {
-          db.connect(function (err) {
-            if (err) throw err;
-            db.query(
-              "INSERT INTO employee(first_name,last_name, role_id, manager_id) VALUES (?,?,?,?)",
-              [
-                answers.first_name,
-                answers.last_name,
-                answers.role_id,
-                answers.manager_id,
-              ],
-              function (err, result) {
-                if (err) throw err;
-                console.log(
-                  "Added " +
-                    answers.first_name +
-                    " " +
-                    answers.last_name +
-                    " to the database"
-                );
-                generateEmployeeManager();
-              }
-            );
+            {
+              type: "list",
+              name: "manager_id",
+              message: "Who is the employee manager?",
+              choices: result2.map((item) => {
+                return {
+                  name: item.first_name + " " + item.last_name,
+                  value: item.id,
+                };
+              }),
+            },
+          ])
+          .then((answers) => {
+            db.connect(function (err) {
+              if (err) throw err;
+              db.query(
+                "INSERT INTO employee(first_name,last_name, role_id, manager_id) VALUES (?,?,?,?)",
+                [
+                  answers.first_name,
+                  answers.last_name,
+                  answers.role_id,
+                  answers.manager_id,
+                ],
+                function (err, result) {
+                  if (err) throw err;
+                  console.log(
+                    "Added " +
+                      answers.first_name +
+                      " " +
+                      answers.last_name +
+                      " to the database"
+                  );
+                  generateEmployeeManager();
+                }
+              );
+            });
           });
-        });
+      });
+    });
+  });
+}
+
+// function to update employees
+function updateEmployeeRole() {
+  db.connect(function (err) {
+    if (err) throw err;
+    db.query("SELECT * FROM employee", function (err, result1) {
+      if (err) throw err;
+      db.query("SELECT * FROM roles", function (err, result2) {
+        if (err) throw err;
+
+        inquirer
+          .prompt([
+            {
+              type: "list",
+              name: "employee_id",
+              message: "Which employee do you want to update?",
+              choices: result1.map((item) => {
+                return {
+                  name: item.first_name + " " + item.last_name,
+                  value: item.id,
+                };
+              }),
+            },
+            {
+              type: "list",
+              name: "role_id",
+              message: "Which role do you want to give to employee?",
+              choices: result2.map((item) => {
+                return {
+                  name: item.title,
+                  value: item.id,
+                };
+              }),
+            },
+          ])
+          .then((answers) => {
+            db.connect(function (err) {
+              if (err) throw err;
+              db.query(
+                "UPDATE Employee SET role_id = ? WHERE id = ?",
+                [answers.role_id, answers.employee_id],
+                function (err, result) {
+                  if (err) throw err;
+                  console.log(
+                    "sucessfully updated " +
+                      result1.filter((item) => {
+                        return item.id == answers.employee_id;
+                      })[0].first_name +
+                      "'s role"
+                  );
+                  generateEmployeeManager();
+                }
+              );
+            });
+          });
+      });
     });
   });
 }
