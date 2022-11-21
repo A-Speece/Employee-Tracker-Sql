@@ -41,4 +41,4 @@ no testing at the moment has been done
 
 GitHub Username: A-Speece
 Email: anthonyspeece@gmail.com
-Walkthrough Video:
+Walkthrough Video: https://app.castify.com/view/ee7c4d29-dcd9-444b-b08e-7dc805d43695
